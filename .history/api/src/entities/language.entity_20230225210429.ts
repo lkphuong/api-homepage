@@ -27,6 +27,13 @@ export class LanguageEntity extends RootEntity {
   })
   slug: string;
 
+  @Column('varchar', {
+    name: '_slug',
+    nullable: true,
+    length: 500,
+  })
+  _slug: string;
+
   @Column('boolean', {
     name: 'published',
     nullable: true,

@@ -5,31 +5,33 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { NotificationEntity } from './notification.entity';
 import { LanguageEntity } from './language.entity';
 import { RootEntity } from './root.entity';
-import { PositionEntity } from './position.entity';
-
 import { LANGUAGE_DEFAULT } from '../constants';
 
-@Entity('position_languages')
-export class PositionLanguageEntity extends RootEntity {
+@Entity('notification_languages')
+export class NotificationLanguageEntity extends RootEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => PositionEntity, (position) => position.position_languages)
+  @ManyToOne(
+    () => NotificationEntity,
+    (notification) => notification.notification_languages,
+  )
   @JoinColumn([
     {
-      name: 'position_id',
+      name: 'notification_id',
       referencedColumnName: 'id',
     },
   ])
-  position: PositionEntity | null;
+  notification: NotificationEntity | null;
 
   @Column('uuid', {
-    name: 'position_id',
+    name: 'notification_id',
     nullable: false,
   })
-  position_id: string;
+  notification_id: string;
 
   @Column('varchar', {
     name: 'language_id',
@@ -38,7 +40,7 @@ export class PositionLanguageEntity extends RootEntity {
   language_id?: string = LANGUAGE_DEFAULT;
 
   @Column('varchar', {
-    name: 'name',
+    name: 'title',
     nullable: false,
     length: 255,
   })
@@ -50,6 +52,13 @@ export class PositionLanguageEntity extends RootEntity {
     length: 500,
   })
   slug: string;
+
+  @Column('varchar', {
+    name: '_slug',
+    nullable: true,
+    length: 500,
+  })
+  _slug: string;
 
   language: LanguageEntity | null;
 }

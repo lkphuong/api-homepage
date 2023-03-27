@@ -280,7 +280,7 @@ export const addNotificationLanguage = async (
   let notification_language = new NotificationLanguageEntity();
   notification_language.notification = notification;
   notification_language.title = title;
-  notification_language.slug = _slugify(title);
+  notification_language.slug = _slugify(title );
   notification_language.language_id = LANGUAGE_DEFAULT;
   notification_language.created_at = new Date();
   notification_language.created_by = 'system';
@@ -332,7 +332,7 @@ export const editNotificationLanguage = async (
   if (notification_language) {
     //#region edit notification
     notification_language.title = title;
-    notification_language.slug = _slugify(title);
+    notification_language.slug = _slugify(title );
     notification_language.updated_at = new Date();
     notification_language.updated_by = 'system';
 
@@ -347,7 +347,7 @@ export const editNotificationLanguage = async (
     //#region update new noti language
     let new_notification_language = new NotificationLanguageEntity();
     new_notification_language.title = title;
-    new_notification_language.slug = _slugify(title);
+    new_notification_language.slug = _slugify(title );
     new_notification_language.notification = notification;
     new_notification_language.language_id = language_id;
     new_notification_language.created_at = new Date();

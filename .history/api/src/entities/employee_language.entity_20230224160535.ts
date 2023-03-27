@@ -6,37 +6,44 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { LANGUAGE_DEFAULT } from '../constants';
-import { BannerEntity } from './banner.entity';
+import { EmployeeEntity } from './employee.entity';
 import { FileEntity } from './file.entity';
 import { LanguageEntity } from './language.entity';
 import { RootEntity } from './root.entity';
 
-@Entity('banner_languages')
-export class BannerLanguageEntity extends RootEntity {
+@Entity('employee_languages')
+export class EmployeeLanguageEntity extends RootEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => BannerEntity, (banner) => banner.banner_languages)
+  @ManyToOne(() => EmployeeEntity, (employee) => employee.employee_languages)
   @JoinColumn([
     {
-      name: 'banner_id',
+      name: 'employee_id',
       referencedColumnName: 'id',
     },
   ])
-  banner: BannerEntity | null;
+  employee: EmployeeEntity | null;
 
   @Column('uuid', {
-    name: 'banner_id',
+    name: 'employee_id',
     nullable: false,
   })
-  banner_id: string;
+  employee_id: string;
 
   @Column('varchar', {
-    name: 'title',
+    name: 'name',
     nullable: false,
     length: 255,
   })
-  title: string;
+  name: string;
+
+  @Column('varchar', {
+    name: '_slug',
+    nullable: true,
+    length: 500,
+  })
+  _slug: string;
 
   @Column('varchar', {
     name: 'slug',
@@ -44,6 +51,13 @@ export class BannerLanguageEntity extends RootEntity {
     length: 500,
   })
   slug: string;
+
+  @Column('varchar', {
+    name: 'academic_degree',
+    nullable: true,
+    length: 500,
+  })
+  academic_degree: string;
 
   @Column('uuid', {
     name: 'file_id',

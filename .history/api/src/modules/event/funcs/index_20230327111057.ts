@@ -290,7 +290,7 @@ export const addEventLanguage = async (
   let event_language = new EventLanguageEntity();
   event_language.event = event;
   event_language.title = title;
-  event_language.slug = _slugify(title);
+  event_language.slug = _slugify(title );
   event_language.file_id = file.id;
   event_language.language_id = language_id;
 
@@ -361,7 +361,7 @@ export const editEventLanguage = async (
     } else {
       //#region edit
       event_language.title = title;
-      event_language.slug = _slugify(title);
+      event_language.slug = _slugify(title );
       event_language.file_id = file.id;
       event_language.updated_at = new Date();
       event_language.updated_by = 'system';
@@ -403,7 +403,7 @@ export const editEventLanguage = async (
     //#region add event language
     let new_event_language = new EventLanguageEntity();
     new_event_language.title = title;
-    new_event_language.slug = _slugify(title);
+    new_event_language.slug = _slugify(title );
     new_event_language.event = event;
     new_event_language.file_id = file.id;
     new_event_language.language_id = language_id;

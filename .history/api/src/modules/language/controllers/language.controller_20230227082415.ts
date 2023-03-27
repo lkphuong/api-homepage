@@ -317,6 +317,7 @@ export class LanguageController {
       language.name = name;
       language.code = (parseInt(count.toString()) + 1).toString();
       language.slug = _slugify(name);
+
       language.published = published;
 
       language = await this._languageService.add(language);

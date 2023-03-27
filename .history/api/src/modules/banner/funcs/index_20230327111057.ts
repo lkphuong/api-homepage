@@ -10,31 +10,31 @@ import {
 import { _slugify } from '../../../utils';
 
 import {
-  validateEvent,
-  validateEventId,
+  validateBanner,
+  validateBannerId,
   validateFile,
   validateTime,
 } from '../validations';
 
+import { BannerEntity } from '../../../entities/banner.entity';
+import { BannerLanguageEntity } from '../../../entities/banner_language.entity';
 import { FileEntity } from '../../../entities/file.entity';
-import { EventLanguageEntity } from '../../../entities/event_language.entity';
-import { EventEntity } from '../../../entities/event.entity';
 
-import { CreateEventDto } from '../dtos/create_event.dto';
-import { UpdateEventDto } from '../dtos/update_event.dto';
+import { CreateBannerDto } from '../dtos/create_banner.dto';
+import { UpdateBannerDto } from '../dtos/update_banner.dto';
 
+import { BannerService } from '../services/banner/banner.service';
 import { FilesService } from '../../file/services/files.service';
-import { EventService } from '../services/event/event.service';
-import { EventLanguageService } from '../services/event_language/event_language.service';
+import { BannerLanguageService } from '../services/banner-language/banner_language.service';
 
 import { HandlerException } from '../../../exceptions/HandlerException';
 
 import { SERVER_EXIT_CODE } from '../../../constants/enums/error_code.enum';
 
-export const createEvent = async (
-  params: CreateEventDto,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const createBanner = async (
+  params: CreateBannerDto,
+  banner_service: BannerService,
+  banner_language_service: BannerLanguageService,
   file_service: FilesService,
   data_source: DataSource,
   req: Request,
@@ -53,22 +53,25 @@ export const createEvent = async (
     // Start transaction
     await query_runner.startTransaction();
 
-    //#region Create event
-    //#region Create event
-    const event = await addEvent(params, event_service, query_runner);
-    if (event) {
-      //#region create event language
-      const event_language = await addEventLanguage(
+    //#region Create banner
+    const banner = await addBanner(params, banner_service, query_runner);
+    if (banner) {
+      //#region create banner language
+      const banner_language = await addBannerLanguage(
         params,
-        event,
+        banner,
         file,
-        event_language_service,
+        banner_language_service,
         file_service,
         query_runner,
       );
-      if (event_language) {
+      if (banner_language) {
         //#region generate response
-        return await generateSuccessResponse(event_language, query_runner, req);
+        return await generateSuccessResponse(
+          banner_language,
+          query_runner,
+          req,
+        );
         //#endregion
       }
       //#endregion
@@ -99,11 +102,11 @@ export const createEvent = async (
   }
 };
 
-export const updateEvent = async (
-  event_id: string,
-  params: UpdateEventDto,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const updateBanner = async (
+  banner_id: string,
+  params: UpdateBannerDto,
+  banner_service: BannerService,
+  banner_language_service: BannerLanguageService,
   file_service: FilesService,
   data_source: DataSource,
   req: Request,
@@ -117,9 +120,9 @@ export const updateEvent = async (
   const valid = validateTime(start_date, end_date, req);
   if (valid instanceof HttpException) throw valid;
   //#endregion
-  //#region Validate event
-  const event = await validateEvent(event_id, event_service, req);
-  if (event instanceof HttpException) throw event;
+  //#region Validate banner
+  const banner = await validateBanner(banner_id, banner_service, req);
+  if (banner instanceof HttpException) throw banner;
   //#endregion
   //#region Validate file
   const file = await validateFile(file_id, file_service, req);
@@ -135,29 +138,33 @@ export const updateEvent = async (
     // Start transaction
     await query_runner.startTransaction();
 
-    //#region update event
-    const event = await editEvent(
-      event_id,
+    //#region update banner
+    const banner = await editBanner(
+      banner_id,
       params,
-      event_service,
+      banner_service,
       query_runner,
     );
 
-    if (event) {
-      //#region Update event language
-      const event_language = await editEventLanguage(
-        event_id,
-        event,
+    if (banner) {
+      //#region Update banner language
+      const banner_language = await editBannerLanguage(
+        banner_id,
+        banner,
         file,
         params,
-        event_language_service,
+        banner_language_service,
         file_service,
         query_runner,
       );
 
-      if (event_language) {
+      if (banner_language) {
         //#region generate response
-        return await generateSuccessResponse(event_language, query_runner, req);
+        return await generateSuccessResponse(
+          banner_language,
+          query_runner,
+          req,
+        );
         //#endregion
       }
       //#endregion
@@ -188,22 +195,22 @@ export const updateEvent = async (
   }
 };
 
-export const deleteEvent = async (
-  event_id: string,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const deleteBanner = async (
+  banner_id: string,
+  banner_service: BannerService,
+  banner_language_service: BannerLanguageService,
   data_source: DataSource,
   req: Request,
 ) => {
   //#region Validation
-  //#region validate event id
-  const valid = validateEventId(event_id, req);
+  //#region validate banner id
+  const valid = validateBannerId(banner_id, req);
   if (valid instanceof HttpException) throw valid;
   //#endregion
 
-  //#region validate event
-  const event = await validateEvent(event_id, event_service, req);
-  if (event instanceof HttpException) throw event;
+  //#region validate banner
+  const banner = await validateBanner(banner_id, banner_service, req);
+  if (banner instanceof HttpException) throw banner;
   //#endregion
 
   //#endregion
@@ -217,20 +224,20 @@ export const deleteEvent = async (
     await query_runner.startTransaction();
     //#endregion
 
-    //#region delete event
-    const delete_event = await event_service.unlink(
-      event_id,
+    //#region delete banner
+    const delete_banner = await banner_service.unlink(
+      banner_id,
       query_runner.manager,
     );
-    if (delete_event) {
-      const delete_event_language = await event_language_service.bulkUnlink(
-        event_id,
+    if (delete_banner) {
+      const delete_banner_language = await banner_language_service.bulkUnlink(
+        banner_id,
         query_runner.manager,
       );
 
-      if (delete_event_language) {
+      if (delete_banner_language) {
         //#region generate response
-        return await generateDeleteSuccessResponse(event, query_runner, req);
+        return await generateDeleteSuccessResponse(banner, query_runner, req);
         //#endregion
       }
     }
@@ -260,39 +267,39 @@ export const deleteEvent = async (
   }
 };
 
-export const addEvent = async (
-  params: CreateEventDto,
-  event_service: EventService,
+export const addBanner = async (
+  params: CreateBannerDto,
+  banner_service: BannerService,
   query_runner: QueryRunner,
 ) => {
   const { start_date, end_date, published } = params;
 
-  let event = new EventEntity();
-  event.start_date = new Date(start_date);
-  event.end_date = new Date(end_date);
-  event.published = published;
+  let banner = new BannerEntity();
+  banner.start_date = new Date(start_date);
+  banner.end_date = new Date(end_date);
+  banner.published = published;
 
-  event = await event_service.add(event, query_runner.manager);
+  banner = await banner_service.add(banner, query_runner.manager);
 
-  return event;
+  return banner;
 };
 
-export const addEventLanguage = async (
-  params: CreateEventDto,
-  event: EventEntity,
+export const addBannerLanguage = async (
+  params: CreateBannerDto,
+  banner: BannerEntity,
   file: FileEntity,
-  event_language_service: EventLanguageService,
+  banner_language_service: BannerLanguageService,
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
   const { title, language_id } = params;
 
-  let event_language = new EventLanguageEntity();
-  event_language.event = event;
-  event_language.title = title;
-  event_language.slug = _slugify(title);
-  event_language.file_id = file.id;
-  event_language.language_id = language_id;
+  let banner_language = new BannerLanguageEntity();
+  banner_language.banner = banner;
+  banner_language.title = title;
+  banner_language.slug = _slugify(title );
+  banner_language.file_id = file.id;
+  banner_language.language_id = language_id;
 
   //#region update file
   file.drafted = false;
@@ -301,55 +308,56 @@ export const addEventLanguage = async (
   file = await file_service.update(file, query_runner.manager);
   //#endregion
 
-  event_language = await event_language_service.add(
-    event_language,
+  banner_language = await banner_language_service.add(
+    banner_language,
     query_runner.manager,
   );
 
-  return event_language;
+  return banner_language;
 };
 
-export const editEvent = async (
-  event_id: string,
-  params: UpdateEventDto,
-  event_service: EventService,
+export const editBanner = async (
+  banner_id: string,
+  params: UpdateBannerDto,
+  banner_service: BannerService,
   query_runner: QueryRunner,
 ) => {
   const { start_date, end_date, published } = params;
-  let event = await event_service.getEventById(event_id);
+  let banner = await banner_service.getBannerById(banner_id);
 
-  event.start_date = new Date(start_date);
-  event.end_date = new Date(end_date);
-  event.published = published;
+  banner.start_date = new Date(start_date);
+  banner.end_date = new Date(end_date);
+  banner.published = published;
 
-  event = await event_service.update(event, query_runner.manager);
+  banner = await banner_service.update(banner, query_runner.manager);
 
-  return event;
+  return banner;
 };
 
-export const editEventLanguage = async (
-  event_id: string,
-  event: EventEntity,
+export const editBannerLanguage = async (
+  banner_id: string,
+  banner: BannerEntity,
   file: FileEntity,
-  params: UpdateEventDto,
-  event_language_service: EventLanguageService,
+  params: UpdateBannerDto,
+  banner_language_service: BannerLanguageService,
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
   const { language_id, title, deleted } = params;
+
   let update_files: FileEntity[] = [];
 
-  let event_language = await event_language_service.contains(
-    event_id,
+  let banner_language = await banner_language_service.contains(
+    banner_id,
     language_id,
   );
-  if (event_language) {
+  if (banner_language) {
     //#region edit or delete
     if (deleted) {
       //#region delete
-      event_language.deleted = true;
-      event_language.deleted_at = new Date();
-      event_language.deleted_by = 'system';
+      banner_language.deleted = true;
+      banner_language.deleted_at = new Date();
+      banner_language.deleted_by = 'system';
       //#endregion
 
       //#region delete file
@@ -360,17 +368,17 @@ export const editEventLanguage = async (
       //#endregion
     } else {
       //#region edit
-      event_language.title = title;
-      event_language.slug = _slugify(title);
-      event_language.file_id = file.id;
-      event_language.updated_at = new Date();
-      event_language.updated_by = 'system';
+      banner_language.title = title;
+      banner_language.slug = _slugify(title );
+      banner_language.file_id = file.id;
+      banner_language.updated_at = new Date();
+      banner_language.updated_by = 'system';
       //#endregion
 
       //#region update file
-      if (file.id != event_language.file_id) {
+      if (file.id != banner_language.file_id) {
         //#region delete old file
-        const old_file = event_language.file;
+        const old_file = banner_language.file;
         old_file.drafted = true;
         old_file.deleted = true;
         old_file.deleted_at = new Date();
@@ -392,24 +400,24 @@ export const editEventLanguage = async (
       query_runner.manager,
     );
 
-    event_language = await event_language_service.update(
-      event_language,
+    banner_language = await banner_language_service.update(
+      banner_language,
       query_runner.manager,
     );
 
-    return event_language;
+    return banner_language;
     //#endregion
   } else {
-    //#region add event language
-    let new_event_language = new EventLanguageEntity();
-    new_event_language.title = title;
-    new_event_language.slug = _slugify(title);
-    new_event_language.event = event;
-    new_event_language.file_id = file.id;
-    new_event_language.language_id = language_id;
+    //#region add banner language
+    let new_banner_language = new BannerLanguageEntity();
+    new_banner_language.title = title;
+    new_banner_language.slug = _slugify(title );
+    new_banner_language.banner = banner;
+    new_banner_language.file_id = file.id;
+    new_banner_language.language_id = language_id;
 
-    new_event_language = await event_language_service.add(
-      new_event_language,
+    new_banner_language = await banner_language_service.add(
+      new_banner_language,
       query_runner.manager,
     );
 
@@ -421,7 +429,7 @@ export const editEventLanguage = async (
 
     await file_service.update(file, query_runner.manager);
 
-    return new_event_language;
+    return new_banner_language;
     //#endregion
   }
 };

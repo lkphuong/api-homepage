@@ -279,7 +279,7 @@ export const addScheduleLanguage = async (
   schedule_language.schedule = schedule;
   schedule_language.title = title;
   schedule_language.content = content;
-  schedule_language.slug = _slugify(title);
+  schedule_language.slug = _slugify(title );
   schedule_language.language_id = language_id;
 
   schedule_language = await schedule_language_service.add(
@@ -336,7 +336,7 @@ export const editScheduleLanguage = async (
       schedule_language.attendee = attendee;
       schedule_language.content = content;
       schedule_language.language_id = language_id;
-      schedule_language.slug = _slugify(title);
+      schedule_language.slug = _slugify(title );
       schedule_language.updated_at = new Date();
       schedule_language.updated_by = 'system';
       //#endregion
@@ -353,7 +353,7 @@ export const editScheduleLanguage = async (
     //#region add schedule language
     let new_schedule_language = new ScheduleLanguageEntity();
     new_schedule_language.title = title;
-    new_schedule_language.slug = _slugify(title);
+    new_schedule_language.slug = _slugify(title );
     new_schedule_language.schedule = schedule;
     new_schedule_language.attendee = attendee;
     new_schedule_language.location = location;

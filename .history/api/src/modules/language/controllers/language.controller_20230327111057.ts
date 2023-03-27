@@ -316,7 +316,7 @@ export class LanguageController {
       let language = new LanguageEntity();
       language.name = name;
       language.code = (parseInt(count.toString()) + 1).toString();
-      language.slug = _slugify(name);
+      language.slug = _slugify(name );
       language.published = published;
 
       language = await this._languageService.add(language);
@@ -397,7 +397,7 @@ export class LanguageController {
 
       //#region update language
       update_language.name = name;
-      update_language.slug = _slugify(name);
+      update_language.slug = _slugify(name );
       update_language.published = published;
       update_language.updated_at = new Date();
       update_language.updated_by = 'system';

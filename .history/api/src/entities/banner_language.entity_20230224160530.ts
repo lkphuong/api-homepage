@@ -39,6 +39,13 @@ export class BannerLanguageEntity extends RootEntity {
   title: string;
 
   @Column('varchar', {
+    name: '_slug',
+    nullable: true,
+    length: 500,
+  })
+  _slug: string;
+
+  @Column('varchar', {
     name: 'slug',
     nullable: true,
     length: 500,

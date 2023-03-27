@@ -10,31 +10,30 @@ import {
 import { _slugify } from '../../../utils';
 
 import {
-  validateEvent,
-  validateEventId,
+  validateEmployee,
+  validateEmployeeId,
   validateFile,
-  validateTime,
 } from '../validations';
 
+import { EmployeeEntity } from '../../../entities/employee.entity';
+import { EmployeeLanguageEntity } from '../../../entities/employee_language.entity';
 import { FileEntity } from '../../../entities/file.entity';
-import { EventLanguageEntity } from '../../../entities/event_language.entity';
-import { EventEntity } from '../../../entities/event.entity';
 
-import { CreateEventDto } from '../dtos/create_event.dto';
-import { UpdateEventDto } from '../dtos/update_event.dto';
+import { CreateEmployeeDto } from '../dtos/create_employee.dto';
+import { UpdateEmployeeDto } from '../dtos/update_employee.dto';
 
+import { EmployeeService } from '../services/employee/employee.service';
 import { FilesService } from '../../file/services/files.service';
-import { EventService } from '../services/event/event.service';
-import { EventLanguageService } from '../services/event_language/event_language.service';
+import { EmployeeLanguageService } from '../services/employee-language/employee_language.service';
 
 import { HandlerException } from '../../../exceptions/HandlerException';
 
 import { SERVER_EXIT_CODE } from '../../../constants/enums/error_code.enum';
 
-export const createEvent = async (
-  params: CreateEventDto,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const createEmployee = async (
+  params: CreateEmployeeDto,
+  employee_service: EmployeeService,
+  employee_language_service: EmployeeLanguageService,
   file_service: FilesService,
   data_source: DataSource,
   req: Request,
@@ -53,22 +52,25 @@ export const createEvent = async (
     // Start transaction
     await query_runner.startTransaction();
 
-    //#region Create event
-    //#region Create event
-    const event = await addEvent(params, event_service, query_runner);
-    if (event) {
-      //#region create event language
-      const event_language = await addEventLanguage(
+    //#region Create employee
+    const employee = await addEmployee(params, employee_service, query_runner);
+    if (employee) {
+      //#region create employee language
+      const employee_language = await addEmployeeLanguage(
         params,
-        event,
+        employee,
         file,
-        event_language_service,
+        employee_language_service,
         file_service,
         query_runner,
       );
-      if (event_language) {
+      if (employee_language) {
         //#region generate response
-        return await generateSuccessResponse(event_language, query_runner, req);
+        return await generateSuccessResponse(
+          employee_language,
+          query_runner,
+          req,
+        );
         //#endregion
       }
       //#endregion
@@ -99,27 +101,23 @@ export const createEvent = async (
   }
 };
 
-export const updateEvent = async (
-  event_id: string,
-  params: UpdateEventDto,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const updateEmployee = async (
+  employee_id: string,
+  params: UpdateEmployeeDto,
+  employee_service: EmployeeService,
+  employee_language_service: EmployeeLanguageService,
   file_service: FilesService,
   data_source: DataSource,
   req: Request,
 ) => {
   //#region Get params
-  const { start_date, end_date, file_id } = params;
+  const { file_id } = params;
   //#endregion
 
   //#region Validation
-  //#region Validate time
-  const valid = validateTime(start_date, end_date, req);
-  if (valid instanceof HttpException) throw valid;
-  //#endregion
-  //#region Validate event
-  const event = await validateEvent(event_id, event_service, req);
-  if (event instanceof HttpException) throw event;
+  //#region Validate employee
+  const employee = await validateEmployee(employee_id, employee_service, req);
+  if (employee instanceof HttpException) throw employee;
   //#endregion
   //#region Validate file
   const file = await validateFile(file_id, file_service, req);
@@ -135,29 +133,33 @@ export const updateEvent = async (
     // Start transaction
     await query_runner.startTransaction();
 
-    //#region update event
-    const event = await editEvent(
-      event_id,
+    //#region update employee
+    const employee = await editEmployee(
+      employee_id,
       params,
-      event_service,
+      employee_service,
       query_runner,
     );
 
-    if (event) {
-      //#region Update event language
-      const event_language = await editEventLanguage(
-        event_id,
-        event,
+    if (employee) {
+      //#region Update employee language
+      const employee_language = await editEmployeeLanguage(
+        employee_id,
+        employee,
         file,
         params,
-        event_language_service,
+        employee_language_service,
         file_service,
         query_runner,
       );
 
-      if (event_language) {
+      if (employee_language) {
         //#region generate response
-        return await generateSuccessResponse(event_language, query_runner, req);
+        return await generateSuccessResponse(
+          employee_language,
+          query_runner,
+          req,
+        );
         //#endregion
       }
       //#endregion
@@ -188,22 +190,22 @@ export const updateEvent = async (
   }
 };
 
-export const deleteEvent = async (
-  event_id: string,
-  event_service: EventService,
-  event_language_service: EventLanguageService,
+export const deleteEmployee = async (
+  employee_id: string,
+  employee_service: EmployeeService,
+  employee_language_service: EmployeeLanguageService,
   data_source: DataSource,
   req: Request,
 ) => {
   //#region Validation
-  //#region validate event id
-  const valid = validateEventId(event_id, req);
+  //#region validate employee id
+  const valid = validateEmployeeId(employee_id, req);
   if (valid instanceof HttpException) throw valid;
   //#endregion
 
-  //#region validate event
-  const event = await validateEvent(event_id, event_service, req);
-  if (event instanceof HttpException) throw event;
+  //#region validate employee
+  const employee = await validateEmployee(employee_id, employee_service, req);
+  if (employee instanceof HttpException) throw employee;
   //#endregion
 
   //#endregion
@@ -217,20 +219,21 @@ export const deleteEvent = async (
     await query_runner.startTransaction();
     //#endregion
 
-    //#region delete event
-    const delete_event = await event_service.unlink(
-      event_id,
+    //#region delete employee
+    const delete_employee = await employee_service.unlink(
+      employee_id,
       query_runner.manager,
     );
-    if (delete_event) {
-      const delete_event_language = await event_language_service.bulkUnlink(
-        event_id,
-        query_runner.manager,
-      );
+    if (delete_employee) {
+      const delete_employee_language =
+        await employee_language_service.bulkUnlink(
+          employee_id,
+          query_runner.manager,
+        );
 
-      if (delete_event_language) {
+      if (delete_employee_language) {
         //#region generate response
-        return await generateDeleteSuccessResponse(event, query_runner, req);
+        return await generateDeleteSuccessResponse(employee, query_runner, req);
         //#endregion
       }
     }
@@ -260,39 +263,38 @@ export const deleteEvent = async (
   }
 };
 
-export const addEvent = async (
-  params: CreateEventDto,
-  event_service: EventService,
+export const addEmployee = async (
+  params: CreateEmployeeDto,
+  employee_service: EmployeeService,
   query_runner: QueryRunner,
 ) => {
-  const { start_date, end_date, published } = params;
+  const { published } = params;
 
-  let event = new EventEntity();
-  event.start_date = new Date(start_date);
-  event.end_date = new Date(end_date);
-  event.published = published;
+  let employee = new EmployeeEntity();
+  employee.published = published;
 
-  event = await event_service.add(event, query_runner.manager);
+  employee = await employee_service.add(employee, query_runner.manager);
 
-  return event;
+  return employee;
 };
 
-export const addEventLanguage = async (
-  params: CreateEventDto,
-  event: EventEntity,
+export const addEmployeeLanguage = async (
+  params: CreateEmployeeDto,
+  employee: EmployeeEntity,
   file: FileEntity,
-  event_language_service: EventLanguageService,
+  employee_language_service: EmployeeLanguageService,
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
-  const { title, language_id } = params;
+  const { name, academic_degree, language_id } = params;
 
-  let event_language = new EventLanguageEntity();
-  event_language.event = event;
-  event_language.title = title;
-  event_language.slug = _slugify(title);
-  event_language.file_id = file.id;
-  event_language.language_id = language_id;
+  let employee_language = new EmployeeLanguageEntity();
+  employee_language.employee = employee;
+  employee_language.name = name;
+  employee_language.slug = _slugify(name );
+  employee_language.academic_degree = academic_degree;
+  employee_language.file_id = file.id;
+  employee_language.language_id = language_id;
 
   //#region update file
   file.drafted = false;
@@ -301,55 +303,54 @@ export const addEventLanguage = async (
   file = await file_service.update(file, query_runner.manager);
   //#endregion
 
-  event_language = await event_language_service.add(
-    event_language,
+  employee_language = await employee_language_service.add(
+    employee_language,
     query_runner.manager,
   );
 
-  return event_language;
+  return employee_language;
 };
 
-export const editEvent = async (
-  event_id: string,
-  params: UpdateEventDto,
-  event_service: EventService,
+export const editEmployee = async (
+  employee_id: string,
+  params: UpdateEmployeeDto,
+  employee_service: EmployeeService,
   query_runner: QueryRunner,
 ) => {
-  const { start_date, end_date, published } = params;
-  let event = await event_service.getEventById(event_id);
+  const { published } = params;
+  let employee = await employee_service.getEmployeeById(employee_id);
 
-  event.start_date = new Date(start_date);
-  event.end_date = new Date(end_date);
-  event.published = published;
+  employee.published = published;
 
-  event = await event_service.update(event, query_runner.manager);
+  employee = await employee_service.update(employee, query_runner.manager);
 
-  return event;
+  return employee;
 };
 
-export const editEventLanguage = async (
-  event_id: string,
-  event: EventEntity,
+export const editEmployeeLanguage = async (
+  employee_id: string,
+  employee: EmployeeEntity,
   file: FileEntity,
-  params: UpdateEventDto,
-  event_language_service: EventLanguageService,
+  params: UpdateEmployeeDto,
+  employee_language_service: EmployeeLanguageService,
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, title, deleted } = params;
+  const { language_id, academic_degree, name, deleted } = params;
+
   let update_files: FileEntity[] = [];
 
-  let event_language = await event_language_service.contains(
-    event_id,
+  let employee_language = await employee_language_service.contains(
+    employee_id,
     language_id,
   );
-  if (event_language) {
+  if (employee_language) {
     //#region edit or delete
     if (deleted) {
       //#region delete
-      event_language.deleted = true;
-      event_language.deleted_at = new Date();
-      event_language.deleted_by = 'system';
+      employee_language.deleted = true;
+      employee_language.deleted_at = new Date();
+      employee_language.deleted_by = 'system';
       //#endregion
 
       //#region delete file
@@ -360,17 +361,17 @@ export const editEventLanguage = async (
       //#endregion
     } else {
       //#region edit
-      event_language.title = title;
-      event_language.slug = _slugify(title);
-      event_language.file_id = file.id;
-      event_language.updated_at = new Date();
-      event_language.updated_by = 'system';
+      employee_language.name = name;
+      employee_language.slug = _slugify(name );
+      employee_language.file_id = file.id;
+      employee_language.updated_at = new Date();
+      employee_language.updated_by = 'system';
       //#endregion
 
       //#region update file
-      if (file.id != event_language.file_id) {
+      if (file.id != employee_language.file_id) {
         //#region delete old file
-        const old_file = event_language.file;
+        const old_file = employee_language.file;
         old_file.drafted = true;
         old_file.deleted = true;
         old_file.deleted_at = new Date();
@@ -392,24 +393,25 @@ export const editEventLanguage = async (
       query_runner.manager,
     );
 
-    event_language = await event_language_service.update(
-      event_language,
+    employee_language = await employee_language_service.update(
+      employee_language,
       query_runner.manager,
     );
 
-    return event_language;
+    return employee_language;
     //#endregion
   } else {
-    //#region add event language
-    let new_event_language = new EventLanguageEntity();
-    new_event_language.title = title;
-    new_event_language.slug = _slugify(title);
-    new_event_language.event = event;
-    new_event_language.file_id = file.id;
-    new_event_language.language_id = language_id;
+    //#region add employee language
+    let new_employee_language = new EmployeeLanguageEntity();
+    new_employee_language.name = name;
+    new_employee_language.slug = _slugify(name );
+    new_employee_language.employee = employee;
+    new_employee_language.academic_degree = academic_degree;
+    new_employee_language.file_id = file.id;
+    new_employee_language.language_id = language_id;
 
-    new_event_language = await event_language_service.add(
-      new_event_language,
+    new_employee_language = await employee_language_service.add(
+      new_employee_language,
       query_runner.manager,
     );
 
@@ -421,7 +423,7 @@ export const editEventLanguage = async (
 
     await file_service.update(file, query_runner.manager);
 
-    return new_event_language;
+    return new_employee_language;
     //#endregion
   }
 };

@@ -268,7 +268,7 @@ export const addPositionLanguage = async (
   let position_language = new PositionLanguageEntity();
   position_language.position = position;
   position_language.title = title;
-  position_language.slug = _slugify(title);
+  position_language.slug = _slugify(title );
   position_language.language_id = LANGUAGE_DEFAULT;
   position_language.created_at = new Date();
   position_language.created_by = 'system';
@@ -315,7 +315,7 @@ export const editPositionLanguage = async (
   if (position_language) {
     //#region edit position
     position_language.title = title;
-    position_language.slug = _slugify(title);
+    position_language.slug = _slugify(title );
     position_language.updated_at = new Date();
     position_language.updated_by = 'system';
 
@@ -330,7 +330,7 @@ export const editPositionLanguage = async (
     //#region update new noti language
     let new_position_language = new PositionLanguageEntity();
     new_position_language.title = title;
-    new_position_language.slug = _slugify(title);
+    new_position_language.slug = _slugify(title );
     new_position_language.position = position;
     new_position_language.language_id = language_id;
     new_position_language.created_at = new Date();

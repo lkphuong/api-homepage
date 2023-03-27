@@ -6,30 +6,30 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { LANGUAGE_DEFAULT } from '../constants';
-import { BannerEntity } from './banner.entity';
+import { EventEntity } from './event.entity';
 import { FileEntity } from './file.entity';
 import { LanguageEntity } from './language.entity';
 import { RootEntity } from './root.entity';
 
-@Entity('banner_languages')
-export class BannerLanguageEntity extends RootEntity {
+@Entity('event_languages')
+export class EventLanguageEntity extends RootEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => BannerEntity, (banner) => banner.banner_languages)
+  @ManyToOne(() => EventEntity, (event) => event.event_languages)
   @JoinColumn([
     {
-      name: 'banner_id',
+      name: 'event_id',
       referencedColumnName: 'id',
     },
   ])
-  banner: BannerEntity | null;
+  event: EventEntity | null;
 
   @Column('uuid', {
-    name: 'banner_id',
+    name: 'event_id',
     nullable: false,
   })
-  banner_id: string;
+  event_id: string;
 
   @Column('varchar', {
     name: 'title',
@@ -37,6 +37,13 @@ export class BannerLanguageEntity extends RootEntity {
     length: 255,
   })
   title: string;
+
+  @Column('varchar', {
+    name: '_slug',
+    nullable: true,
+    length: 500,
+  })
+  _slug: string;
 
   @Column('varchar', {
     name: 'slug',
