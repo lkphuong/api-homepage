@@ -165,6 +165,7 @@ export const deletePosition = async (
 
 export const updatePosition = async (
   position_id: string,
+  language_id: string,
   params: UpdatePositionDto,
   position_service: PositionService,
   position_language_service: PositionLanguageService,
@@ -203,6 +204,7 @@ export const updatePosition = async (
       //#region update position language
       const position_language = await editPositionLanguage(
         position_id,
+        language_id,
         position,
         params,
         position_language_service,
@@ -300,12 +302,13 @@ export const editPosition = async (
 
 export const editPositionLanguage = async (
   position_id: string,
+  language_id: string,
   position: PositionEntity,
   param: UpdatePositionDto,
   position_language_service: PositionLanguageService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, title } = param;
+  const { title } = param;
 
   let position_language = await position_language_service.contains(
     position_id,

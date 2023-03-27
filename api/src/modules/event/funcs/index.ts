@@ -101,6 +101,7 @@ export const createEvent = async (
 
 export const updateEvent = async (
   event_id: string,
+  language_id: string,
   params: UpdateEventDto,
   event_service: EventService,
   event_language_service: EventLanguageService,
@@ -147,6 +148,7 @@ export const updateEvent = async (
       //#region Update event language
       const event_language = await editEventLanguage(
         event_id,
+        language_id,
         event,
         file,
         params,
@@ -329,6 +331,7 @@ export const editEvent = async (
 
 export const editEventLanguage = async (
   event_id: string,
+  language_id: string,
   event: EventEntity,
   file: FileEntity,
   params: UpdateEventDto,
@@ -336,7 +339,7 @@ export const editEventLanguage = async (
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, title, deleted } = params;
+  const { title, deleted } = params;
   let update_files: FileEntity[] = [];
 
   let event_language = await event_language_service.contains(

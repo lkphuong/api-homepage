@@ -58,6 +58,7 @@ import {
 import { Configuration } from '../../shared/constants/configuration.enum';
 import { Levels } from '../../../constants/enums/level.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';
+import { Cookies } from '../../../decorators';
 
 @Controller('employees')
 export class EmployeeController {
@@ -83,7 +84,7 @@ export class EmployeeController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getemployeeById(
     @Param('id') id: string,
-    @Query('language_id') language_id: string,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<EmployeeLanguageResponse> | HttpException> {
     try {
@@ -106,7 +107,7 @@ export class EmployeeController {
       //#endregion
 
       //#region Validate language id
-      valid = validateLanguageId(language_id, req);
+      valid = validateLanguageId(language, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
       //#endregion
@@ -114,7 +115,7 @@ export class EmployeeController {
       const employee_language =
         await this._employeeLanguageService.getEmployeeLanguageById(
           id,
-          language_id,
+          language,
         );
 
       if (employee_language) {
@@ -161,6 +162,7 @@ export class EmployeeController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getemployeePaging(
     @Body() params: GetEmployeePagingDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpPagingResponse<EmployeePagingResponse> | HttpException> {
     try {
@@ -170,7 +172,7 @@ export class EmployeeController {
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
       //#region Get parrams
-      const { language_id, page, input } = params;
+      const { page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -180,8 +182,7 @@ export class EmployeeController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._employeeService.count(language_id, input);
-        console.log('count: ', count);
+        const count = await this._employeeService.count(language, input);
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
       //#endregion
@@ -190,7 +191,7 @@ export class EmployeeController {
       const employees = await this._employeeService.getEmployeePaging(
         (page - 1) * itemsPerPage,
         itemsPerPage,
-        language_id,
+        language,
         input,
       );
       //#endregion
@@ -292,6 +293,7 @@ export class EmployeeController {
   async update(
     @Param('id') id: string,
     @Body() params: UpdateEmployeeDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<EmployeeLanguageResponse> | HttpException> {
     try {
@@ -307,6 +309,7 @@ export class EmployeeController {
 
       const employee = await updateEmployee(
         id,
+        language,
         params,
         this._employeeService,
         this._employeeLanguageService,

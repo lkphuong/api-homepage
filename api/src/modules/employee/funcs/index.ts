@@ -103,6 +103,7 @@ export const createEmployee = async (
 
 export const updateEmployee = async (
   employee_id: string,
+  language_id: string,
   params: UpdateEmployeeDto,
   employee_service: EmployeeService,
   employee_language_service: EmployeeLanguageService,
@@ -145,6 +146,7 @@ export const updateEmployee = async (
       //#region Update employee language
       const employee_language = await editEmployeeLanguage(
         employee_id,
+        language_id,
         employee,
         file,
         params,
@@ -329,6 +331,7 @@ export const editEmployee = async (
 
 export const editEmployeeLanguage = async (
   employee_id: string,
+  language_id: string,
   employee: EmployeeEntity,
   file: FileEntity,
   params: UpdateEmployeeDto,
@@ -336,7 +339,7 @@ export const editEmployeeLanguage = async (
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, academic_degree, name, deleted } = params;
+  const { academic_degree, name, deleted } = params;
 
   let update_files: FileEntity[] = [];
 

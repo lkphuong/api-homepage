@@ -170,6 +170,7 @@ export const deleteNotification = async (
 
 export const updateNotification = async (
   notification_id: string,
+  language_id: string,
   params: UpdateNotificationDto,
   notification_service: NotificationService,
   notification_language_service: NotificationLanguageService,
@@ -212,6 +213,7 @@ export const updateNotification = async (
       //#region update notification language
       const notification_language = await editNotificationLanguage(
         notification_id,
+        language_id,
         notification,
         params,
         notification_language_service,
@@ -317,12 +319,13 @@ export const editNotification = async (
 
 export const editNotificationLanguage = async (
   notification_id: string,
+  language_id: string,
   notification: NotificationEntity,
   param: UpdateNotificationDto,
   notification_language_service: NotificationLanguageService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, title } = param;
+  const { title } = param;
 
   let notification_language = await notification_language_service.contains(
     notification_id,

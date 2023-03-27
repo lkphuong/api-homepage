@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
   UsePipes,
@@ -19,20 +20,13 @@ import { DataSource } from 'typeorm';
 
 import {
   generateArraySuccessResponse,
-  generateDeleteSuccessResponse,
-  generateFailedResponse,
-  generateResponse,
   generateSuccessResponse,
 } from '../utils';
-import { sprintf, _slugify } from '../../../utils';
+import { sprintf } from '../../../utils';
 
-import { LanguageEntity } from '../../../entities/language.entity';
+import { createPosition, updatePosition, deletePosition } from '../funcs';
 
-import {
-  validateLanguageId,
-  validateLanguage,
-  validateSlugLanguage,
-} from '../validations';
+import { validateLanguageId, validatePositionId } from '../validations';
 
 import { HandlerException } from '../../../exceptions/HandlerException';
 import { UnknownException } from '../../../exceptions/UnknownException';
@@ -40,18 +34,21 @@ import { UnknownException } from '../../../exceptions/UnknownException';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 import { LogService } from '../../log/services/log.service';
-import { LanguageService } from '../services/language.service';
+import { PositionService } from '../services/position/position.service';
+import { PositionLanguageService } from '../services/position_language/position_language.service';
+
 import { ConfigurationService } from '../../shared/services/configuration/configuration.service';
 
-import { LanguageDto } from '../dtos/language.dto';
-import { GetLanguagePagingDto } from '../dtos/get_language_paging.dto';
+import { CreatePositionDto } from '../dtos/create_position.dto';
+import { UpdatePositionDto } from '../dtos/update_position.dto';
+import { GetPositionPagingDto } from '../dtos/get_position_paging.dto';
 
 import { HttpPagingResponse } from '../../../interfaces/http_paging_response.interface';
 import { HttpResponse } from '../../../interfaces/http_response.interface';
 import {
-  DeleteLanguageResponse,
-  LanguageResponse,
-} from '../interfaces/language_response';
+  PositionResponse,
+  DeleteNotificationResponse,
+} from '../interfaces/position_response.interface';
 
 import {
   DATABASE_EXIT_CODE,
@@ -60,84 +57,34 @@ import {
 import { Configuration } from '../../shared/constants/configuration.enum';
 import { Levels } from '../../../constants/enums/level.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';
+import { Cookies } from '../../../decorators';
 
-@Controller('languages')
-export class LanguageController {
+@Controller('positions')
+export class PositionController {
   constructor(
     private _logger: LogService,
     private readonly _dataSource: DataSource,
-    private readonly _languageService: LanguageService,
+    private readonly _positionService: PositionService,
+    private readonly _positionLanguageService: PositionLanguageService,
     private readonly _configurationService: ConfigurationService,
   ) {}
 
   /**
    * @method GET
-   * @url api/languages/
+   * @url api/positions/:id/?language_id=
    * @param id
-   * @return HttpResponse<LanguageResponse[]> | HttpException
-   * @description
-   * @page
-   */
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async getAll(
-    @Req() req: Request,
-  ): Promise<HttpResponse<LanguageResponse> | HttpException> {
-    try {
-      console.log('----------------------------------------------------------');
-      console.log(req.method + ' - ' + req.url);
-
-      this._logger.writeLog(Levels.LOG, req.method, req.url, null);
-
-      const languages = await this._languageService.getAll();
-
-      if (languages) {
-        //#region generate response
-        return await generateResponse(languages, null, req);
-        //#endregion
-      } else {
-        //#region throw HandlerException
-        throw new HandlerException(
-          DATABASE_EXIT_CODE.NO_CONTENT,
-          req.method,
-          req.url,
-          ErrorMessage.NO_CONTENT,
-          HttpStatus.NOT_FOUND,
-        );
-        //#endregion
-      }
-    } catch (err) {
-      console.log(err);
-      console.log('----------------------------------------------------------');
-      console.log(req.method + ' - ' + req.url + ': ' + err.message);
-
-      if (err instanceof HttpException) throw err;
-      else {
-        throw new HandlerException(
-          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
-          req.method,
-          req.url,
-        );
-      }
-    }
-  }
-
-  /**
-   * @method GET
-   * @url api/languages/:id/
-   * @param id
-   * @return HttpResponse<LanguageResponse> | HttpException
+   * @return HttpResponse<PositionResponse> | HttpException
    * @description
    * @page
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async getlanguageById(
+  async getpositionById(
     @Param('id') id: string,
+    @Cookies() language: string,
     @Req() req: Request,
-  ): Promise<HttpResponse<LanguageResponse> | HttpException> {
+  ): Promise<HttpResponse<PositionResponse> | HttpException> {
     try {
       console.log('----------------------------------------------------------');
       console.log(
@@ -151,19 +98,29 @@ export class LanguageController {
         JSON.stringify({ id: id }),
       );
 
+      console.log('language: ', language);
+
       //#region Validation
-      //#region Validate language id
-      const valid = validateLanguageId(id, req);
+      //#region Validate position id
+      let valid = validatePositionId(id, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
 
+      //#region Validate language id
+      valid = validateLanguageId(language, req);
+      if (valid instanceof HttpException) throw valid;
+      //#endregion
       //#endregion
 
-      const language = await this._languageService.getLanguageById(id);
+      const position_language =
+        await this._positionLanguageService.getPositionLanguageById(
+          id,
+          language,
+        );
 
-      if (language) {
+      if (position_language) {
         //#region generate response
-        return await generateSuccessResponse(language, null, req);
+        return await generateSuccessResponse(position_language, null, req);
         //#endregion
       } else {
         //#region throw HandlerException
@@ -172,12 +129,11 @@ export class LanguageController {
           DATABASE_EXIT_CODE.UNKNOW_VALUE,
           req.method,
           req.url,
-          sprintf(ErrorMessage.LANGUAGE_NOT_FOUND_ERROR, id),
+          sprintf(ErrorMessage.POSITION_NOT_FOUND_ERROR, id),
         );
         //#endregion
       }
     } catch (err) {
-      console.log(err);
       console.log('----------------------------------------------------------');
       console.log(req.method + ' - ' + req.url + ': ' + err.message);
 
@@ -194,9 +150,9 @@ export class LanguageController {
 
   /**
    * @method POST
-   * @url api/language/all
-   * @param
-   * @return HttpPagingResponse<LanguageResponse> | HttpException
+   * @url api/positions/:id
+   * @param id
+   * @return HttpResponse<positionResponse> | HttpException
    * @description
    * @page
    */
@@ -204,18 +160,21 @@ export class LanguageController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async getlanguagePaging(
-    @Body() params: GetLanguagePagingDto,
+  async getpositionPaging(
+    @Body() params: GetPositionPagingDto,
     @Req() req: Request,
-  ): Promise<HttpPagingResponse<LanguageResponse> | HttpException> {
+    @Cookies() language: string,
+  ): Promise<HttpPagingResponse<PositionResponse> | HttpException> {
     try {
       console.log('----------------------------------------------------------');
       console.log(req.method + ' - ' + req.url + '');
 
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
+      console.log('language: ', language);
+
       //#region Get parrams
-      const { page, input } = params;
+      const { language_id, page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -225,22 +184,23 @@ export class LanguageController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._languageService.count(input);
+        const count = await this._positionService.count(language_id, input);
 
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
       //#endregion
 
-      //#region get languages
-      const languages = await this._languageService.getLanguagePaging(
+      //#region get positions
+      const positions = await this._positionService.getPositionPaging(
         (page - 1) * itemsPerPage,
         itemsPerPage,
+        language_id,
         input,
       );
       //#endregion
-      if (languages && languages.length > 0) {
+      if (positions && positions.length > 0) {
         //#region generate response
-        return await generateArraySuccessResponse(pages, page, languages, req);
+        return await generateArraySuccessResponse(pages, page, positions, req);
         //#endregion
       } else {
         //#region throw HandlerException
@@ -271,9 +231,9 @@ export class LanguageController {
 
   /**
    * @method POST
-   * @url api/languages/
+   * @url api/positions/
    * @param id
-   * @return HttpResponse<LanguageResponse> | HttpException
+   * @return HttpResponse<PositionResponse> | HttpException
    * @description
    * @page
    */
@@ -281,9 +241,9 @@ export class LanguageController {
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async create(
-    @Body() params: LanguageDto,
+    @Body() params: CreatePositionDto,
     @Req() req: Request,
-  ): Promise<HttpResponse<LanguageResponse> | HttpException> {
+  ): Promise<HttpResponse<PositionResponse> | HttpException> {
     try {
       console.log('----------------------------------------------------------');
       console.log(req.method + ' - ' + req.url + ': ' + JSON.stringify(params));
@@ -295,38 +255,15 @@ export class LanguageController {
         JSON.stringify(params),
       );
 
-      //#region Get param
-      const { name, published } = params;
-
-      //#region Validate slug
-      const valid = await validateSlugLanguage(
-        name,
-        this._languageService,
+      const position = await createPosition(
+        params,
+        this._positionService,
+        this._positionLanguageService,
+        this._dataSource,
         req,
       );
-      if (valid instanceof HttpException) throw valid;
-      //#endregion
-      //#endregion
-
-      //#region generate code
-      const count = await this._languageService.count();
-      //#endregion
-
-      //#region create language
-      let language = new LanguageEntity();
-      language.name = name;
-      language.code = (parseInt(count.toString()) + 1).toString();
-      language.slug = _slugify(name);
-      language.published = published;
-
-      language = await this._languageService.add(language);
-
-      if (language) {
-        return await generateSuccessResponse(language, null, req);
-      } else {
-        return generateFailedResponse(req);
-      }
-      //#endregion
+      if (position instanceof HttpException) throw position;
+      else return position;
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');
@@ -345,9 +282,9 @@ export class LanguageController {
 
   /**
    * @method PUT
-   * @url api/languages/:id
+   * @url api/positions/:id
    * @param id
-   * @return HttpResponse<LanguageResponse> | HttpException
+   * @return HttpResponse<PositionResponse> | HttpException
    * @description
    * @page
    */
@@ -357,9 +294,9 @@ export class LanguageController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async update(
     @Param('id') id: string,
-    @Body() params: LanguageDto,
+    @Body() params: UpdatePositionDto,
     @Req() req: Request,
-  ): Promise<HttpResponse<LanguageResponse> | HttpException> {
+  ): Promise<HttpResponse<PositionResponse> | HttpException> {
     try {
       console.log('----------------------------------------------------------');
       console.log(req.method + ' - ' + req.url + ': ' + JSON.stringify(params));
@@ -370,47 +307,17 @@ export class LanguageController {
         req.url,
         JSON.stringify(params),
       );
-      //#region get param
-      const { name, published } = params;
 
-      //#region validate id
-      const valid = validateLanguageId(id, req);
-      if (valid instanceof HttpException) throw valid;
-      //#endregion
-      const language = await this._languageService.contains(id, name);
-      if (language) {
-        throw new HandlerException(
-          DATABASE_EXIT_CODE.UNIQUE_FIELD_VALUE,
-          req.method,
-          req.url,
-          sprintf(ErrorMessage.LANGUAGE_HAS_EXIST_ERROR, name),
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      let update_language = await validateLanguage(
+      const position = await updatePosition(
         id,
-        this._languageService,
+        params,
+        this._positionService,
+        this._positionLanguageService,
+        this._dataSource,
         req,
       );
-      if (update_language instanceof HttpException) throw update_language;
-
-      //#region update language
-      update_language.name = name;
-      update_language.slug = _slugify(name);
-      update_language.published = published;
-      update_language.updated_at = new Date();
-      update_language.updated_by = 'system';
-
-      update_language = await this._languageService.update(update_language);
-
-      if (update_language) {
-        return await generateSuccessResponse(update_language, null, req);
-      } else {
-        return generateFailedResponse(req);
-      }
-      //#endregion
-      //#endregion
+      if (position instanceof HttpException) throw position;
+      else return position;
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');
@@ -429,7 +336,7 @@ export class LanguageController {
 
   /**
    * @method DELETE
-   * @url api/language/:id
+   * @url api/positions/:id
    * @param id
    * @return HttpResponse<DeleteNotificationResponse> | HttpException
    * @description
@@ -442,7 +349,7 @@ export class LanguageController {
   async unlink(
     @Param('id') id: string,
     @Req() req: Request,
-  ): Promise<HttpResponse<DeleteLanguageResponse> | HttpException> {
+  ): Promise<HttpResponse<DeleteNotificationResponse> | HttpException> {
     try {
       console.log('----------------------------------------------------------');
       console.log(
@@ -456,26 +363,16 @@ export class LanguageController {
         JSON.stringify({ id: id }),
       );
 
-      //#region validate language id
-      const valid = validateLanguageId(id, req);
-      if (valid instanceof HttpException) throw valid;
-      //#endregion
-
-      //#region delete language
-
-      const language = await validateLanguage(id, this._languageService, req);
-      if (language instanceof HttpException) throw language;
-
-      language.deleted = true;
-      language.deleted_at = new Date();
-      language.deleted_by = 'system';
-
-      if (language) {
-        return await generateDeleteSuccessResponse(language, null, req);
-      } else {
-        return await generateFailedResponse(req);
-      }
-
+      //#region delete position
+      const result = await deletePosition(
+        id,
+        this._positionService,
+        this._positionLanguageService,
+        this._dataSource,
+        req,
+      );
+      if (result instanceof HttpException) throw result;
+      else return result;
       //#endregion
     } catch (err) {
       console.log(err);

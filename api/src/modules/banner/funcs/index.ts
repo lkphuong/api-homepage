@@ -104,6 +104,7 @@ export const createBanner = async (
 
 export const updateBanner = async (
   banner_id: string,
+  language_id: string,
   params: UpdateBannerDto,
   banner_service: BannerService,
   banner_language_service: BannerLanguageService,
@@ -150,6 +151,7 @@ export const updateBanner = async (
       //#region Update banner language
       const banner_language = await editBannerLanguage(
         banner_id,
+        language_id,
         banner,
         file,
         params,
@@ -336,6 +338,7 @@ export const editBanner = async (
 
 export const editBannerLanguage = async (
   banner_id: string,
+  language_id: string,
   banner: BannerEntity,
   file: FileEntity,
   params: UpdateBannerDto,
@@ -343,7 +346,7 @@ export const editBannerLanguage = async (
   file_service: FilesService,
   query_runner: QueryRunner,
 ) => {
-  const { language_id, title, deleted } = params;
+  const { title, deleted } = params;
 
   let update_files: FileEntity[] = [];
 

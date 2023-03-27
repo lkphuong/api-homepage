@@ -58,6 +58,7 @@ import {
 import { Configuration } from '../../shared/constants/configuration.enum';
 import { Levels } from '../../../constants/enums/level.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';
+import { Cookies } from '../../../decorators';
 
 @Controller('events')
 export class EventController {
@@ -83,7 +84,7 @@ export class EventController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async geteventById(
     @Param('id') id: string,
-    @Query('language_id') language_id: string,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<EventResponse> | HttpException> {
     try {
@@ -106,13 +107,13 @@ export class EventController {
       //#endregion
 
       //#region Validate language id
-      valid = validateLanguageId(language_id, req);
+      valid = validateLanguageId(language, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
       //#endregion
 
       const event_language =
-        await this._eventLanguageService.getEventLanguageById(id, language_id);
+        await this._eventLanguageService.getEventLanguageById(id, language);
 
       if (event_language) {
         //#region generate response
@@ -158,6 +159,7 @@ export class EventController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async geteventPaging(
     @Body() params: GetEventPagingDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpPagingResponse<EventResponse> | HttpException> {
     try {
@@ -167,7 +169,7 @@ export class EventController {
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
       //#region Get parrams
-      const { language_id, page, input } = params;
+      const { page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -177,7 +179,7 @@ export class EventController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._eventService.count(language_id, input);
+        const count = await this._eventService.count(language, input);
 
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
@@ -187,7 +189,7 @@ export class EventController {
       const events = await this._eventService.getEventPaging(
         (page - 1) * itemsPerPage,
         itemsPerPage,
-        language_id,
+        language,
         input,
       );
       //#endregion
@@ -289,6 +291,7 @@ export class EventController {
   async update(
     @Param('id') id: string,
     @Body() params: UpdateEventDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<EventResponse> | HttpException> {
     try {
@@ -304,6 +307,7 @@ export class EventController {
 
       const event = await updateEvent(
         id,
+        language,
         params,
         this._eventService,
         this._eventLanguageService,

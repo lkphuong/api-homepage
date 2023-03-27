@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 
@@ -19,6 +20,9 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET, POST, PUT, DELETE'],
   });
+
+  app.use(cookieParser());
+  //app.use(json({ limit: '50mb' }));
 
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new HttpExceptionFilter(new ConfigurationService()));

@@ -92,19 +92,16 @@ export const createSchedule = async (
 
 export const updateSchedule = async (
   schedule_id: string,
+  language: string,
   params: UpdateScheduleDto,
   schedule_service: ScheduleService,
   schedule_language_service: ScheduleLanguageService,
   data_source: DataSource,
   req: Request,
 ) => {
-  //#region Get params
-  const { language_id } = params;
-  //#endregion
-
   //#region Validation
   //#region Validate language
-  const valid = await validateLanguageId(language_id, req);
+  const valid = await validateLanguageId(language, req);
   if (valid instanceof HttpException) throw valid;
   //#endregion
   //#region Validate schedule
@@ -133,6 +130,7 @@ export const updateSchedule = async (
       //#region Update schedule language
       const schedule_language = await editScheduleLanguage(
         schedule_id,
+        language,
         schedule,
         params,
         schedule_language_service,
@@ -309,6 +307,7 @@ export const editSchedule = async (
 
 export const editScheduleLanguage = async (
   schedule_id: string,
+  language: string,
   schedule: ScheduleEntity,
   params: UpdateScheduleDto,
   schedule_language_service: ScheduleLanguageService,

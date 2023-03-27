@@ -57,6 +57,7 @@ import {
 import { Configuration } from '../../shared/constants/configuration.enum';
 import { Levels } from '../../../constants/enums/level.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';
+import { Cookies } from '../../../decorators';
 
 @Controller('positions')
 export class PositionController {
@@ -81,7 +82,7 @@ export class PositionController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getpositionById(
     @Param('id') id: string,
-    @Query('language_id') language_id: string,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<PositionResponse> | HttpException> {
     try {
@@ -104,7 +105,7 @@ export class PositionController {
       //#endregion
 
       //#region Validate language id
-      valid = validateLanguageId(language_id, req);
+      valid = validateLanguageId(language, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
       //#endregion
@@ -112,7 +113,7 @@ export class PositionController {
       const position_language =
         await this._positionLanguageService.getPositionLanguageById(
           id,
-          language_id,
+          language,
         );
 
       if (position_language) {
@@ -160,6 +161,7 @@ export class PositionController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getpositionPaging(
     @Body() params: GetPositionPagingDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpPagingResponse<PositionResponse> | HttpException> {
     try {
@@ -169,7 +171,7 @@ export class PositionController {
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
       //#region Get parrams
-      const { language_id, page, input } = params;
+      const { page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -179,7 +181,7 @@ export class PositionController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._positionService.count(language_id, input);
+        const count = await this._positionService.count(language, input);
 
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
@@ -189,7 +191,7 @@ export class PositionController {
       const positions = await this._positionService.getPositionPaging(
         (page - 1) * itemsPerPage,
         itemsPerPage,
-        language_id,
+        language,
         input,
       );
       //#endregion
@@ -290,6 +292,7 @@ export class PositionController {
   async update(
     @Param('id') id: string,
     @Body() params: UpdatePositionDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<PositionResponse> | HttpException> {
     try {
@@ -305,6 +308,7 @@ export class PositionController {
 
       const position = await updatePosition(
         id,
+        language,
         params,
         this._positionService,
         this._positionLanguageService,

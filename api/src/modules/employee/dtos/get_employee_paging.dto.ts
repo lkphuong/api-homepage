@@ -33,16 +33,6 @@ export class GetEmployeePagingDto {
   )
   @IsNotEmpty({
     message: (arg) =>
-      generateValidationMessage(arg, 'Bạn vui lòng chọn [ngôn ngữ].'),
-  })
-  language_id?: string = LANGUAGE_DEFAULT;
-
-  @IsOptional()
-  @Transform((params) =>
-    params.value ? params.value.toString().trim() : params.value,
-  )
-  @IsNotEmpty({
-    message: (arg) =>
       generateValidationMessage(arg, 'Bạn vui lòng nhập [nội dung tìm kiếm].'),
   })
   input: string;

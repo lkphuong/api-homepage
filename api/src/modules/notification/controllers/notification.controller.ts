@@ -52,6 +52,7 @@ import {
 } from '../funcs';
 import { UpdateNotificationDto } from '../dtos/update_notification.dto';
 import { DeleteBannerResponse } from '../../banner/interfaces/banner_response.interface';
+import { Cookies } from '../../../decorators';
 
 @Controller('notifications')
 export class NotificationController {
@@ -65,7 +66,7 @@ export class NotificationController {
 
   /**
    * @method GET
-   * @url api/notifications/:id/?language_id=
+   * @url api/notifications/:id/
    * @param id
    * @return HttpResponse<NotificationResponse> | HttpException
    * @description
@@ -76,7 +77,7 @@ export class NotificationController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getNotificationById(
     @Param('id') id: string,
-    @Query('language_id') language_id: string,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<NotificationResponse> | HttpException> {
     try {
@@ -99,7 +100,7 @@ export class NotificationController {
       //#endregion
 
       //#region Validate language id
-      valid = validateLanguageId(language_id, req);
+      valid = validateLanguageId(language, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
       //#endregion
@@ -107,7 +108,7 @@ export class NotificationController {
       const notification_language =
         await this._notificationLanguageService.getNotiLanguageById(
           id,
-          language_id,
+          language,
         );
 
       if (notification_language) {
@@ -155,6 +156,7 @@ export class NotificationController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getNotificationPaging(
     @Body() params: GetNotificationPagingDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpPagingResponse<NotificationResponse> | HttpException> {
     try {
@@ -164,7 +166,7 @@ export class NotificationController {
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
       //#region Get parrams
-      const { language_id, page, input } = params;
+      const { page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -174,7 +176,7 @@ export class NotificationController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._notificationService.count(language_id, input);
+        const count = await this._notificationService.count(language, input);
 
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
@@ -185,7 +187,7 @@ export class NotificationController {
         await this._notificationService.getNotificationPaging(
           (page - 1) * itemsPerPage,
           itemsPerPage,
-          language_id,
+          language,
           input,
         );
       //#endregion
@@ -291,6 +293,7 @@ export class NotificationController {
   async update(
     @Param('id') id: string,
     @Body() params: UpdateNotificationDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<NotificationResponse> | HttpException> {
     try {
@@ -306,6 +309,7 @@ export class NotificationController {
 
       const notification = await updateNotification(
         id,
+        language,
         params,
         this._notificationService,
         this._notificationLanguageService,

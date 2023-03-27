@@ -57,6 +57,7 @@ import {
 import { Configuration } from '../../shared/constants/configuration.enum';
 import { Levels } from '../../../constants/enums/level.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';
+import { Cookies } from '../../../decorators';
 
 @Controller('schedules')
 export class ScheduleController {
@@ -81,7 +82,7 @@ export class ScheduleController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getBannerById(
     @Param('id') id: string,
-    @Query('language_id') language_id: string,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<ScheduleLanguageResponse> | HttpException> {
     try {
@@ -104,7 +105,7 @@ export class ScheduleController {
       //#endregion
 
       //#region Validate language id
-      valid = validateLanguageId(language_id, req);
+      valid = validateLanguageId(language, req);
       if (valid instanceof HttpException) throw valid;
       //#endregion
       //#endregion
@@ -112,7 +113,7 @@ export class ScheduleController {
       const schedule_language =
         await this._scheduleLanguageService.getScheduleLanguageById(
           id,
-          language_id,
+          language,
         );
 
       if (schedule_language) {
@@ -159,6 +160,7 @@ export class ScheduleController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async getBannerPaging(
     @Body() params: GetSchedulePagingDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpPagingResponse<SchedulePagingResponse> | HttpException> {
     try {
@@ -168,7 +170,7 @@ export class ScheduleController {
       this._logger.writeLog(Levels.LOG, req.method, req.url, null);
 
       //#region Get parrams
-      const { language_id, page, input } = params;
+      const { page, input } = params;
       let { pages } = params;
 
       const itemsPerPage = parseInt(
@@ -178,7 +180,7 @@ export class ScheduleController {
 
       //#region Get pages
       if (pages === 0) {
-        const count = await this._scheduleService.count(language_id, input);
+        const count = await this._scheduleService.count(language, input);
 
         if (count > 0) pages = Math.ceil(count / itemsPerPage);
       }
@@ -188,7 +190,7 @@ export class ScheduleController {
       const schedules = await this._scheduleService.getSchedulePaging(
         (page - 1) * itemsPerPage,
         itemsPerPage,
-        language_id,
+        language,
         input,
       );
       //#endregion
@@ -289,6 +291,7 @@ export class ScheduleController {
   async update(
     @Param('id') id: string,
     @Body() params: UpdateScheduleDto,
+    @Cookies() language: string,
     @Req() req: Request,
   ): Promise<HttpResponse<ScheduleLanguageResponse> | HttpException> {
     try {
@@ -304,6 +307,7 @@ export class ScheduleController {
 
       const banner = await updateSchedule(
         id,
+        language,
         params,
         this._scheduleService,
         this._scheduleLanguageService,
