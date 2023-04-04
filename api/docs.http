@@ -1,0 +1,66 @@
+@host = http://localhost:3000/api/
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTAyZDk1NzgtOThiYS00NTA1LThhYWQtMTBjM2NhOGVmNTQxIiwidXNlcm5hbWUiOiJtYXN0ZXIiLCJpYXQiOjE2ODA1OTU1NTEsImV4cCI6MTY4MDY4MTk1MX0.sPsJJpjE_meWeNehO-cE9Kz_-ftGfawK7hIDsqMcICc
+
+# Auth Module
+# @name login
+POST {{host}}auth/login
+Content-Type: application/json
+
+{
+    "username": "master",
+    "password": "1"
+}
+
+#Links
+###
+# @name getLinks
+GET {{host}}links
+Authorization: Bearer {{token}}
+#interface
+# {
+#    "data": [
+#     {
+#       "id": string,
+#       "title": string,
+#       "url": string
+#     },
+#     ...
+#   ],
+#   "errorCode": 0,
+#   "message": null,
+#   "errors": null
+# }
+###
+# @name updateLinks
+POST {{host}}links
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+    "links": [
+        {
+        "id": "e847daed-5ed8-488a-a5c3-07e968c61124",
+        "title": "Hỗ trợ sinh viên",
+        "url": "https://changelog.com/podcast/news-2023-04-04"
+        },
+        {
+        "id": "7e763a0f-a1f3-486d-89b0-0cdac3757e38",
+        "title": "Online Sinh viên",
+        "url": "https://changelog.com/podcast/news-2023-04-03"
+        },
+        {
+        "id": "a7517096-ab29-4e14-9b1c-e7a8ecf4dd94",
+        "title": "Youth HCMUE",
+        "url": "https://changelog.com/podcast/news-2023-04-03"
+        },
+        {
+        "id": "76efbe4b-ca71-4479-8797-d84a25fbf56e",
+        "title": "Đăng ký giấy chứng nhận",
+        "url": "https://changelog.com/podcast/news-2023-04-03"
+        },
+        {
+        "id": "372c32cf-9b2d-4a9f-9742-57967f26d05c",
+        "title": "Facebook",
+        "url": "https://changelog.com/podcast/news-2023-04-03"
+        }
+    ]
+}

@@ -166,6 +166,33 @@ export class PositionService {
     }
   }
 
+  async active(
+    position: PositionEntity,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        PositionEntity,
+        { id: position.id },
+        { active: !position.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.UPDATE,
+        'PositionService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(position_id: string, manager?: EntityManager): Promise<boolean> {
     try {
       if (!manager) {

@@ -23,6 +23,8 @@ import { EmployeeModule } from './modules/employee/employee.module';
 import { PositionModule } from './modules/position/position.module';
 import { LanguageModule } from './modules/language/language.module';
 import { ContentModule } from './modules/content/content.module';
+import { FooterModule } from './modules/footer/footer.module';
+import { LinkModule } from './modules/link/link.module';
 
 export const modules = [
   SharedModule,
@@ -41,17 +43,19 @@ export const modules = [
     inject: [ConfigurationService],
     useFactory: postgresqlFactory,
   }),
-  LogModule,
   AuthModule,
-  ContentModule,
-  UserModule,
-  FileModule,
   BannerModule,
+  ContentModule,
+  EmployeeModule,
+  EventModule,
+  FileModule,
+  FooterModule,
+  LanguageModule,
+  LinkModule,
+  LogModule,
   NotificationModule,
   PermissionModule,
-  EventModule,
-  ScheduleModule,
-  EmployeeModule,
   PositionModule,
-  LanguageModule,
+  ScheduleModule,
+  UserModule,
 ];

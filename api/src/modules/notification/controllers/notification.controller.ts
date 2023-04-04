@@ -37,9 +37,10 @@ import { NotificationResponse } from '../interfaces/notification_response.interf
 import { validateLanguageId, validateNotificationId } from '../validations';
 import {
   generateArraySuccessResponse,
+  generateFailedResponse,
   generateSuccessResponse,
 } from '../utils';
-import { sprintf } from '../../../utils';
+import { returnObjects, sprintf } from '../../../utils';
 import { ErrorMessage } from '../constants/enums/errors.enum';
 import { GetNotificationPagingDto } from '../dtos/get_notification_paging.dto';
 import { HttpPagingResponse } from '../../../interfaces/http_paging_response.interface';
@@ -318,6 +319,63 @@ export class NotificationController {
       );
       if (notification instanceof HttpException) throw notification;
       else return notification;
+    } catch (err) {
+      console.log(err);
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url + ': ' + err.message);
+
+      if (err instanceof HttpException) throw err;
+      else {
+        throw new HandlerException(
+          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
+          req.method,
+          req.url,
+        );
+      }
+    }
+  }
+
+  /**
+   * @method PUT
+   * @url api/notifications/active/:id
+   * @access private
+   * @param id
+   * @description
+   * @return HttpResponse<id> | HttpException
+   * @page roles page
+   */
+  @Put('active/:id')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async active(@Param('id') id: string, @Req() req: Request) {
+    try {
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url);
+
+      this._logger.writeLog(Levels.LOG, req.method, req.url, null);
+
+      const notification = await this._notificationService.getNotificationById(
+        id,
+      );
+      if (notification) {
+        const result = await this._notificationService.active(notification);
+        if (result) {
+          return returnObjects({ id: notification.id });
+        }
+        throw generateFailedResponse(
+          req,
+          ErrorMessage.OPERATOR_NOTIFICATION_ERROR,
+        );
+      } else {
+        //#region throw HandlerException
+        return new HandlerException(
+          DATABASE_EXIT_CODE.UNKNOW_VALUE,
+          req.method,
+          req.url,
+          sprintf(ErrorMessage.NOTIFICATION_NOT_FOUND_ERROR, id),
+        );
+        //#endregion
+      }
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');

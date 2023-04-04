@@ -166,6 +166,33 @@ export class EmployeeService {
     }
   }
 
+  async active(
+    employee: EmployeeEntity,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        EmployeeEntity,
+        { id: employee.id },
+        { active: !employee.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.INSERT,
+        'EmployeeService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(employee_id: string, manager?: EntityManager): Promise<boolean> {
     try {
       if (!manager) {

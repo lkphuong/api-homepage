@@ -17,7 +17,7 @@ import {
 import { Request } from 'express';
 import { DataSource } from 'typeorm';
 
-import { sprintf } from '../../../utils';
+import { returnObjects, sprintf } from '../../../utils';
 import { generateArraySuccessResponse } from '../utils';
 import {
   generateFailedResponse,
@@ -218,8 +218,8 @@ export class UserController {
    * @url api/users/:id
    * @access private
    * @param id
-   * @description Hiện thị danh sách người dùng
-   * @return HttpPagingResponse<UserResponse> | HttpException
+   * @description
+   * @return HttpResponse<UserResponse> | HttpException
    * @page roles page
    */
   @Put(':id')
@@ -270,11 +270,63 @@ export class UserController {
   }
 
   /**
+   * @method PUT
+   * @url api/users/active/:id
+   * @access private
+   * @param id
+   * @description
+   * @return HttpResponse<UserResponse> | HttpException
+   * @page roles page
+   */
+  @Put('active/:id')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async active(@Param('id') id: string, @Req() req: Request) {
+    try {
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url);
+
+      this._logger.writeLog(Levels.LOG, req.method, req.url, null);
+
+      const user = await this._userService.getUserById(id);
+      if (user) {
+        const result = await this._userService.active(user);
+        if (result) {
+          return returnObjects({ id: user.id });
+        }
+        throw generateFailedResponse(req, ErrorMessage.OPERATOR_USER_ERROR);
+      } else {
+        //#region throw HandlerException
+        return new HandlerException(
+          DATABASE_EXIT_CODE.UNKNOW_VALUE,
+          req.method,
+          req.url,
+          sprintf(ErrorMessage.USER_NOT_FOUND_ERROR, id),
+        );
+        //#endregion
+      }
+    } catch (err) {
+      console.log(err);
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url + ': ' + err.message);
+
+      if (err instanceof HttpException) throw err;
+      else {
+        throw new HandlerException(
+          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
+          req.method,
+          req.url,
+        );
+      }
+    }
+  }
+
+  /**
    * @method DELETE
    * @url api/users/:id
    * @access private
    * @param id
-   * @description Hiện thị danh sách người dùng
+   * @description
    * @return HttpPagingResponse<UserResponse> | HttpException
    * @page user page
    */

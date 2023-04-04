@@ -7,7 +7,6 @@ export const generateData2Object = (footer: FooterLanguageEntity) => {
       id: footer.id,
       content_id: footer?.content?.id ?? null,
       content: footer?.content?.content,
-      language_id: footer.language_id,
     };
 
     return payload;

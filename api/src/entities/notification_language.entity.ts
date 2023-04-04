@@ -49,7 +49,7 @@ export class NotificationLanguageEntity extends RootEntity {
   @Column('varchar', {
     name: 'slug',
     nullable: true,
-    length: 500,
+    length: 255,
   })
   slug: string;
 

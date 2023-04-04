@@ -166,6 +166,33 @@ export class BannerService {
     }
   }
 
+  async active(
+    banner: BannerEntity,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        BannerEntity,
+        { id: banner.id },
+        { active: !banner.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.INSERT,
+        'BannerService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(banner_id: string, manager?: EntityManager): Promise<boolean> {
     try {
       if (!manager) {

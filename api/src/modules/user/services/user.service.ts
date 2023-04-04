@@ -119,6 +119,26 @@ export class UserService {
     }
   }
 
+  async active(user: UserEntity): Promise<boolean> {
+    try {
+      const result = await this._dataSource.manager.update(
+        UserEntity,
+        { id: user.id },
+        { active: !user.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.UPDATE,
+        'UserService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async update(
     user: UserEntity,
     manager?: EntityManager,
@@ -134,7 +154,7 @@ export class UserService {
     } catch (e) {
       this._logger.writeLog(
         Levels.ERROR,
-        Methods.INSERT,
+        Methods.UPDATE,
         'UserService.update()',
         e,
       );

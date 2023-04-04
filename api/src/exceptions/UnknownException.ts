@@ -9,7 +9,7 @@ export class UnknownException extends HttpException {
   private _logger = new LogService();
 
   constructor(
-    id: number | string,
+    id: number | string | string[],
     errorCode?: number,
     method?: string,
     path?: string,

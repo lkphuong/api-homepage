@@ -162,6 +162,33 @@ export class NotificationService {
     }
   }
 
+  async active(
+    notification: NotificationEntity,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        NotificationEntity,
+        { id: notification.id },
+        { active: !notification.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.UPDATE,
+        'NotificationService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(
     notification_id: string,
     manager?: EntityManager,

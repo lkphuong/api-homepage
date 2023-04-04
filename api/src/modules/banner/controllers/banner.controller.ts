@@ -20,9 +20,10 @@ import { DataSource } from 'typeorm';
 
 import {
   generateArraySuccessResponse,
+  generateFailedResponse,
   generateSuccessResponse,
 } from '../utils';
-import { sprintf } from '../../../utils';
+import { returnObjects, sprintf } from '../../../utils';
 
 import { validateBannerId, validateLanguageId } from '../validations';
 
@@ -316,6 +317,58 @@ export class BannerController {
       );
       if (banner instanceof HttpException) throw banner;
       else return banner;
+    } catch (err) {
+      console.log(err);
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url + ': ' + err.message);
+
+      if (err instanceof HttpException) throw err;
+      else {
+        throw new HandlerException(
+          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
+          req.method,
+          req.url,
+        );
+      }
+    }
+  }
+
+  /**
+   * @method PUT
+   * @url api/banners/active/:id
+   * @access private
+   * @param id
+   * @description
+   * @return HttpResponse<id> | HttpException
+   * @page roles page
+   */
+  @Put('active/:id')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async active(@Param('id') id: string, @Req() req: Request) {
+    try {
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url);
+
+      this._logger.writeLog(Levels.LOG, req.method, req.url, null);
+
+      const banner = await this._bannerService.getBannerById(id);
+      if (banner) {
+        const result = await this._bannerService.active(banner);
+        if (result) {
+          return returnObjects({ id: banner.id });
+        }
+        throw generateFailedResponse(req, ErrorMessage.OPERATOR_BANNER_ERROR);
+      } else {
+        //#region throw HandlerException
+        return new HandlerException(
+          DATABASE_EXIT_CODE.UNKNOW_VALUE,
+          req.method,
+          req.url,
+          sprintf(ErrorMessage.BANNER_NOT_FOUND_ERROR, id),
+        );
+        //#endregion
+      }
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');

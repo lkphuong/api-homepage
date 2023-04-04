@@ -208,6 +208,33 @@ export class LanguageService {
     }
   }
 
+  async active(
+    language: LanguageEntity,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        LanguageEntity,
+        { id: language.id },
+        { active: !language.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.UPDATE,
+        'LanguageService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(language_id: string, manager?: EntityManager): Promise<boolean> {
     try {
       if (!manager) {

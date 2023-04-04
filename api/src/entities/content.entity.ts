@@ -8,7 +8,7 @@ export class ContentEntity extends RootEntity {
 
   @Column('varchar', {
     name: 'source_id',
-    nullable: false,
+    nullable: true,
   })
   source_id: string;
 

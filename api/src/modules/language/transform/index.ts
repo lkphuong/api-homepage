@@ -1,5 +1,5 @@
 import { LanguageEntity } from '../../../entities/language.entity';
-import { LanguageResponse } from '../interfaces/language_response';
+import { LanguageResponse } from '../interfaces/language_response.interface';
 
 export const generateData2Array = (languages: LanguageEntity[]) => {
   const payload: LanguageResponse[] = [];

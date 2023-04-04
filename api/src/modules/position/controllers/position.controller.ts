@@ -20,9 +20,10 @@ import { DataSource } from 'typeorm';
 
 import {
   generateArraySuccessResponse,
+  generateFailedResponse,
   generateSuccessResponse,
 } from '../utils';
-import { sprintf } from '../../../utils';
+import { returnObjects, sprintf } from '../../../utils';
 
 import { createPosition, updatePosition, deletePosition } from '../funcs';
 
@@ -317,6 +318,58 @@ export class PositionController {
       );
       if (position instanceof HttpException) throw position;
       else return position;
+    } catch (err) {
+      console.log(err);
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url + ': ' + err.message);
+
+      if (err instanceof HttpException) throw err;
+      else {
+        throw new HandlerException(
+          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
+          req.method,
+          req.url,
+        );
+      }
+    }
+  }
+
+  /**
+   * @method PUT
+   * @url api/positions/active/:id
+   * @access private
+   * @param id
+   * @description
+   * @return HttpResponse<id> | HttpException
+   * @page roles page
+   */
+  @Put('active/:id')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async active(@Param('id') id: string, @Req() req: Request) {
+    try {
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url);
+
+      this._logger.writeLog(Levels.LOG, req.method, req.url, null);
+
+      const position = await this._positionService.getPositionById(id);
+      if (position) {
+        const result = await this._positionService.active(position);
+        if (result) {
+          return returnObjects({ id: position.id });
+        }
+        throw generateFailedResponse(req, ErrorMessage.OPERATOR_POSITION_ERROR);
+      } else {
+        //#region throw HandlerException
+        return new HandlerException(
+          DATABASE_EXIT_CODE.UNKNOW_VALUE,
+          req.method,
+          req.url,
+          sprintf(ErrorMessage.POSITION_NOT_FOUND_ERROR, id),
+        );
+        //#endregion
+      }
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');

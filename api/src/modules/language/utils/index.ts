@@ -10,7 +10,7 @@ import { generateData2Array, generateData2Object } from '../transform';
 
 import { HandlerException } from '../../../exceptions/HandlerException';
 
-import { LanguageResponse } from '../interfaces/language_response';
+import { LanguageResponse } from '../interfaces/language_response.interface';
 
 import { SERVER_EXIT_CODE } from '../../../constants/enums/error_code.enum';
 import { ErrorMessage } from '../constants/enums/errors.enum';

@@ -168,18 +168,17 @@ export class AuthController {
             req,
           );
           //#endregion
-        } else {
-          //#region throw HandlerException
-          throw new HandlerException(
-            DATABASE_EXIT_CODE.UNKNOW_VALUE,
-            req.method,
-            req.url,
-            ErrorMessage.LOGIN_FAILD,
-            HttpStatus.NOT_FOUND,
-          );
-          //#endregion
         }
       }
+      //#region throw HandlerException
+      throw new HandlerException(
+        DATABASE_EXIT_CODE.UNKNOW_VALUE,
+        req.method,
+        req.url,
+        ErrorMessage.LOGIN_FAILD,
+        HttpStatus.NOT_FOUND,
+      );
+      //#endregion
     } catch (err) {
       console.log(err);
       console.log('----------------------------------------------------------');

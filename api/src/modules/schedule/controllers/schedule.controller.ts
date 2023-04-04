@@ -9,7 +9,6 @@ import {
   Param,
   Post,
   Put,
-  Query,
   Req,
   UseGuards,
   UsePipes,

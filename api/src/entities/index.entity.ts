@@ -1,11 +1,14 @@
 import { BannerEntity } from './banner.entity';
 import { BannerLanguageEntity } from './banner_language.entity';
+import { ContentEntity } from './content.entity';
 import { EmployeeEntity } from './employee.entity';
 import { EmployeeLanguageEntity } from './employee_language.entity';
 import { EventEntity } from './event.entity';
 import { EventLanguageEntity } from './event_language.entity';
 import { FileEntity } from './file.entity';
+import { FooterLanguageEntity } from './footer_language.entity';
 import { LanguageEntity } from './language.entity';
+import { LinkLanguageEntity } from './link_language.entity';
 import { NotificationEntity } from './notification.entity';
 import { NotificationLanguageEntity } from './notification_language.entity';
 import { PermissionEntity } from './permission.entity';
@@ -36,6 +39,9 @@ const entities = [
   SessionEntity,
   UserEntity,
   UserPermissionEntity,
+  FooterLanguageEntity,
+  ContentEntity,
+  LinkLanguageEntity,
 ];
 
 export default entities;

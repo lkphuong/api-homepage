@@ -162,6 +162,30 @@ export class EventService {
     }
   }
 
+  async active(event: EventEntity, manager?: EntityManager): Promise<boolean> {
+    try {
+      if (!manager) {
+        manager = this._dataSource.manager;
+      }
+
+      const result = await manager.update(
+        EventEntity,
+        { id: event.id },
+        { active: !event.active },
+      );
+
+      return result.affected > 0;
+    } catch (e) {
+      this._logger.writeLog(
+        Levels.ERROR,
+        Methods.INSERT,
+        'EventService.active()',
+        e,
+      );
+      return null;
+    }
+  }
+
   async unlink(event_id: string, manager?: EntityManager): Promise<boolean> {
     try {
       if (!manager) {
